@@ -19,3 +19,20 @@
 - `pip install --requirement requirements.txt`
 - `python manage.py runserver`
 - Go to `http://localhost:8000` in a browser.
+
+
+# Working endpoint :
+
+- `/api/contact/`
+
+```json
+```
+{
+    "first_name": "FIRSTNAME",
+    "last_name": "LASTNAME",
+    "phone_number": "XXXXXXXXXX",
+    "email_address": "example@example.com",
+    "message": "Message"
+}
+ ```
+```
