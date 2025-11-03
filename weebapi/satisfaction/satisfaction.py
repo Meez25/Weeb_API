@@ -25,16 +25,24 @@ from sklearn.pipeline import Pipeline
 from sklearn.metrics import classification_report
 import joblib
 
-# 1. Charger les données
+Load data
 df = pd.read_csv("twitter_training.csv", header=None)
+
+Set custom headers because the dataset doesn't have headers
 df.columns = ["ID", "Entity", "Sentiment", "Content"]
+
+Remove the Indifferent and Irrelevant class
 df["Sentiment"] = df["Sentiment"].apply(lambda x: 1 if x == "Positive" else 0)
+
+Remove useless line
 df = df.dropna(subset=["Sentiment", "Content"])
 
+Train the dataset
 X_train, X_test, y_train, y_test = train_test_split(
     df["Content"], df["Sentiment"], test_size=0.2, random_state=42
 )
 
+Vectorization step translats text to digit
 model = Pipeline([
     ("tfidf", TfidfVectorizer(stop_words="english", max_features=100000)),
     ("clf", LogisticRegression(max_iter=1000))
