@@ -26,7 +26,6 @@
 - `/api/contact/`
 
 ```json
-```
 {
     "first_name": "FIRSTNAME",
     "last_name": "LASTNAME",
@@ -34,5 +33,4 @@
     "email_address": "example@example.com",
     "message": "Message"
 }
- ```
 ```
