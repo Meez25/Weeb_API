@@ -54,3 +54,22 @@ POST example :
   "is_published": true
 }
 ```
+
+## Satisfaction endpoint
+
+#### POST :-
+- `/api/satisfaction/`
+
+POST example :
+```json
+{
+  "message": "This is great!"
+}
+```
+
+Response :
+```json
+{
+  "satisfaction": 1
+}
+```
