@@ -23,6 +23,7 @@
 
 # Working endpoint :
 
+## CONTACT endpoint
 - `/api/contact/`
 
 ```json
@@ -32,5 +33,24 @@
     "phone_number": "XXXXXXXXXX",
     "email_address": "example@example.com",
     "message": "Message"
+}
+```
+
+## BLOG endpoint : 
+#### GET/POST : 
+- `/api/posts/`
+
+#### GET/PATCH/DELETE :
+- `/api/posts/<slug>/`
+
+
+POST example : 
+```json
+{
+  "title": "Recette de la tarte aux pommes",
+  "excerpt": "Meilleure tarte du monde",
+  "content": "Ingrédients : pâte feuilleté, pommes, compote de pomme ",
+  "author": "Maïté",
+  "is_published": true
 }
 ```
