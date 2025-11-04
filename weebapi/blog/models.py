@@ -2,6 +2,21 @@ from django.db import models
 from django.utils.text import slugify
 
 
+CATEGORY_CHOICES = [
+    ('technologie', 'Technologie'),
+    ('developpement', 'Développement'),
+    ('accessibilite', 'Accessibilité'),
+    ('performance', 'Performance'),
+    ('architecture', 'Architecture'),
+    ('education', 'Éducation'),
+    ('securite', 'Sécurité'),
+    ('alpha_beta', 'Alpha/Beta'),
+    ('gadget', 'Gadget'),
+    ('design', 'Design'),
+    ('autre', 'Autre'),
+]
+
+
 class Post(models.Model):
     """
     Represents a blog post entry.
@@ -13,6 +28,9 @@ class Post(models.Model):
         excerpt (str): Optional short summary or preview of the content.
         content (str): The main body text of the post.
         author (str): The author’s name. Defaults to "Anonyme".
+        category (str): The category of the post, chosen from predefined choices.
+        date (datetime): Optional publication date and time of the post.
+        readTime (int): Estimated reading time in minutes. Defaults to 0.
         is_published (bool): Indicates whether the post is publicly visible.
         created_at (datetime): Timestamp automatically set when the post is
         created.
@@ -25,6 +43,9 @@ class Post(models.Model):
     excerpt = models.CharField(max_length=300, blank=True)
     content = models.TextField()
     author = models.CharField(max_length=120, default="Anonyme")
+    category = models.CharField(max_length=100, choices=CATEGORY_CHOICES)
+    date = models.DateTimeField(blank=True, null=True)
+    readTime = models.PositiveIntegerField(default=0)
     is_published = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
