@@ -20,7 +20,7 @@ class Post(models.Model):
         modified.
     """
 
-    title = models.CharField(max_length=200, unique=True)
+    title = models.CharField(max_length=200)
     slug = models.SlugField(max_length=220, unique=True, blank=True)
     excerpt = models.CharField(max_length=300, blank=True)
     content = models.TextField()
