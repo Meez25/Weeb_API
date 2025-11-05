@@ -53,7 +53,7 @@ Training Steps:
 
     4. build/train/evaluate (Logistic/DecissionTree/RandomForest)
        
-        === Logistic Regression === accuracy à 0.920
+        === Logistic Regression === accuracy à 0.92
         clf1 = Pipeline(steps=[
             ("tfidf", TfidfVectorizer(max_features=100000, stop_words="english", ngram_range=(1,2))),
             ("logreg", LogisticRegression(max_iter=1000))
@@ -75,7 +75,7 @@ Training Steps:
         print("Accuracy:", accuracy_score(y_test, y_pred2))
         print(classification_report(y_test, y_pred2))
         
-        === Random Forest : accuracy à 0.947 === 
+        === Random Forest : accuracy à 0.94 === 
         clf3 = Pipeline(steps=[
             ("tfidf", TfidfVectorizer(max_features=100000, stop_words="english", ngram_range=(1,2))),
             ("forest", RandomForestClassifier(n_estimators=200, random_state=42, n_jobs=-1))
@@ -87,6 +87,6 @@ Training Steps:
         print(classification_report(y_test, y_pred3))
 
     5. save trained model
-        dump(clf3, "sentiment_forest_model.joblib")
-        print("Modèle sauvegardé sous 'sentiment_forest_model.joblib'")
+        dump(clf3, "sentiment_model.joblib")
+        print("Modèle sauvegardé sous 'sentiment_model.joblib'")
 """
