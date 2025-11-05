@@ -53,9 +53,9 @@ Training Steps:
 
     4. build/train/evaluate (Logistic/DecissionTree/RandomForest)
        
-        === Logistic Regression === accuracy à 0.8888
+        === Logistic Regression === accuracy à 0.920
         clf1 = Pipeline(steps=[
-            ("tfidf", TfidfVectorizer(max_features=20000, stop_words="english", ngram_range=(1,2))),
+            ("tfidf", TfidfVectorizer(max_features=100000, stop_words="english", ngram_range=(1,2))),
             ("logreg", LogisticRegression(max_iter=1000))
         ])
         clf1.fit(X_train, y_train)
@@ -64,9 +64,9 @@ Training Steps:
         print("Accuracy:", accuracy_score(y_test, y_pred1))
         print(classification_report(y_test, y_pred1))
         
-        === Decision Tree === plus long mais accuracy à 0.8912
+        === Decision Tree === plus long, accuracy à 0.89
         clf2 = Pipeline(steps=[
-            ("tfidf", TfidfVectorizer(max_features=20000, stop_words="english", ngram_range=(1,2))),
+            ("tfidf", TfidfVectorizer(max_features=100000, stop_words="english", ngram_range=(1,2))),
             ("tree", DecisionTreeClassifier(random_state=42))
         ])
         clf2.fit(X_train, y_train)
@@ -74,19 +74,10 @@ Training Steps:
         print("\n=== Decision Tree ===")
         print("Accuracy:", accuracy_score(y_test, y_pred2))
         print(classification_report(y_test, y_pred2))
-        >>> résultats : 
-            === Decision Tree ===
-            Accuracy: 0.8912007439265373
-                        precision    recall  f1-score   support
-                Negative       0.91      0.88      0.89      4472
-                Positive       0.87      0.90      0.89      4131
-                accuracy                           0.89      8603
-            macro avg       0.89      0.89      0.89      8603
-            weighted avg       0.89      0.89      0.89      8603
         
-        === Random Forest : accuracy à 0.94 mais très long, non adapté aux données types "commentaires"=== 
+        === Random Forest : accuracy à 0.947 === 
         clf3 = Pipeline(steps=[
-            ("tfidf", TfidfVectorizer(max_features=20000, stop_words="english", ngram_range=(1,2))),
+            ("tfidf", TfidfVectorizer(max_features=100000, stop_words="english", ngram_range=(1,2))),
             ("forest", RandomForestClassifier(n_estimators=200, random_state=42, n_jobs=-1))
         ])
         clf3.fit(X_train, y_train)
@@ -95,26 +86,7 @@ Training Steps:
         print("Accuracy:", accuracy_score(y_test, y_pred3))
         print(classification_report(y_test, y_pred3))
 
-    >>> Keeping Decision Tree for balance between performance and training time. Features importance visualization:
-        vec2 = clf2.named_steps["tfidf"]
-        tree = clf2.named_steps["tree"]
-        importances = tree.feature_importances_
-        feature_names = np.array(vec2.get_feature_names_out())
-        mask = importances > 0
-        importances = importances[mask]
-        feature_names = feature_names[mask]
-        if importances.size == 0:
-            print("Aucune importance non nulle trouvée pour l'arbre (feature_importances_ toutes à 0).")
-        else:
-            top_idx = np.argsort(importances)[-20:][::-1]
-            plt.figure(figsize=(10,6))
-            plt.barh(feature_names[top_idx][::-1], importances[top_idx][::-1])
-            plt.title("Top 20 termes les plus importants (Decision Tree)")
-            plt.xlabel("Importance (feature_importances_)")
-            plt.tight_layout()
-            plt.show()
-
-    6. save trained model
-        dump(clf2, "sentiment_decision_tree_model.joblib")
-        print("Modèle sauvegardé sous 'sentiment_decision_tree_model.joblib'")
+    5. save trained model
+        dump(clf3, "sentiment_forest_model.joblib")
+        print("Modèle sauvegardé sous 'sentiment_forest_model.joblib'")
 """
