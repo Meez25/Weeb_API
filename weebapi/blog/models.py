@@ -7,7 +7,7 @@ class Post(models.Model):
     Represents a blog post entry.
 
     Attributes:
-        title (str): The title of the post. Must be unique.
+        title (str): The title of the post.
         slug (str): URL-friendly version of the title, automatically generated
         if blank.
         excerpt (str): Optional short summary or preview of the content.
