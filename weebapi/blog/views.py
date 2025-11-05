@@ -1,4 +1,5 @@
 from rest_framework import generics, permissions
+from django.db.models import Q
 from .models import Post
 from .serializers import PostSerializer
 
@@ -17,6 +18,28 @@ class PostListCreateView(generics.ListCreateAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        qs = super().get_queryset().filter(is_published=True)
+
+        q = self.request.query_params.get("q")
+        if q:
+            qs = qs.filter(
+                Q(title__icontains=q)
+                | Q(excerpt__icontains=q)
+                | Q(content__icontains=q)
+                | Q(author__icontains=q)
+            )
+
+        author = self.request.query_params.get("author")
+        if author:
+            qs = qs.filter(author__icontains=author)
+
+        ordering = self.request.query_params.get("ordering", "-created_at")
+        if ordering not in ("created_at", "-created_at"):
+            ordering = "-created_at"
+
+        return qs.order_by(ordering)
 
 
 class PostRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
