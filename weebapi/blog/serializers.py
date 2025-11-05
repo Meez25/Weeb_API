@@ -32,6 +32,17 @@ class PostSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "slug", "created_at", "updated_at"]
 
+    def validate_title(self, value):
+        """
+        Basic validation: trim and ensure non-empty title.
+        Args:
+            value (str): The title value to validate.
+        """
+        value = value.strip()
+        if not value:
+            raise serializers.ValidationError("Title cannot be empty.")
+        return value    
+
     def get_url(self, obj):
         """
         Build the absolute URL for a given Post instance.
