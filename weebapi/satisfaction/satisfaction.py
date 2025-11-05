@@ -1,21 +1,27 @@
-import joblib 
-import os 
+import joblib
+import os
 
-MODEL_PATH = os.path.join(os.path.dirname(__file__), "ml", "sentiment_dt_tfidf.joblib") 
-_model = joblib.load(MODEL_PATH) 
+MODEL_PATH = os.path.join(os.path.dirname(
+    __file__), "sentiment_model.joblib")
+_model = joblib.load(MODEL_PATH)
 
-def analyze_sentiment(message: str): 
-    """ Retourne un dict {"label": "Positive"/"Negative", "proba": float|None} """ 
-    if not message or not message.strip(): return {"label": None, "proba": None} 
-    
-# prédiction sur texte brut : le pipeline applique TF-IDF puis l'arbre 
-label = _model.predict([message])[0] 
-    
-# définition de la proba en binaire: 
-def analyze_sentiment_binary(message: str) -> int: 
-    res = analyze_sentiment(message) 
-    return 1 if res["label"] == "Positive" else 0
 
+def analyze_satisfaction(message: str):
+    """ Retourne un dict
+    {"label": "Positive"/"Negative", "proba": float|None} """
+    if not message or not message.strip():
+        return {"label": None, "proba": None}
+
+    # prédiction sur texte brut : le pipeline applique TF-IDF puis l'arbre
+    label = _model.predict([message])[0]
+    return label
+
+    # définition de la proba en binaire:
+
+
+def analyze_satisfaction_binary(message: str) -> int:
+    res = analyze_satisfaction(message)
+    return 1 if res == "Positive" else 0
 
 
 """
@@ -63,7 +69,7 @@ Training Steps:
         print("\n=== Logistic Regression ===")
         print("Accuracy:", accuracy_score(y_test, y_pred1))
         print(classification_report(y_test, y_pred1))
-        
+
         === Decision Tree === plus long, accuracy à 0.89
         clf2 = Pipeline(steps=[
             ("tfidf", TfidfVectorizer(max_features=100000, stop_words="english", ngram_range=(1,2))),
@@ -74,7 +80,7 @@ Training Steps:
         print("\n=== Decision Tree ===")
         print("Accuracy:", accuracy_score(y_test, y_pred2))
         print(classification_report(y_test, y_pred2))
-        
+
         === Random Forest : accuracy à 0.94 === 
         clf3 = Pipeline(steps=[
             ("tfidf", TfidfVectorizer(max_features=100000, stop_words="english", ngram_range=(1,2))),

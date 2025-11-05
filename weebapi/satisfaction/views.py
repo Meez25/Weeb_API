@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from .satisfaction import analyze_satisfaction
+from .satisfaction import analyze_satisfaction_binary
 
 
 class SatisfactionAPIView(APIView):
@@ -38,7 +38,7 @@ class SatisfactionAPIView(APIView):
         Handle POST requests for sentiment analysis.
 
         Validates the input, extracts the 'message' field,
-        and uses `analyze_satisfaction` to return a sentiment score.
+        and uses `analyze_satisfaction_binary()` to return a sentiment score.
 
         Args:
             request (Request): The incoming HTTP request containing JSON data.
@@ -56,5 +56,5 @@ class SatisfactionAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        result = analyze_satisfaction(message)
+        result = analyze_satisfaction_binary(message)
         return Response({"satisfaction": result}, status=status.HTTP_200_OK)
