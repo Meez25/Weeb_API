@@ -69,7 +69,7 @@ POST example :
 
 ## Satisfaction endpoint
 
-#### POST :-
+#### POST :
 - `/api/satisfaction/`
 
 POST example :
