@@ -1,90 +1,126 @@
-import joblib
 import os
+import joblib
 
+
+# Path to the pre-trained sentiment analysis model
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "sentiment_model.joblib")
-model = joblib.load(MODEL_PATH)
+_model = joblib.load(MODEL_PATH)
 
 
-def analyze_satisfaction(message):
-    """
-    Analyze the satisfaction (sentiment) of a given message.
+def analyze_satisfaction(message: str) -> dict:
+    """Analyze the sentiment of a message and return the result.
 
-    Uses a pre-trained logistic regression text classification model
-    to determine whether a message expresses positive or negative sentiment.
-
-    The model was trained on a dataset derived from Twitter sentiment analysis.
-    A positive sentiment returns `1`, while a negative (or neutral) sentiment
-    returns `0`.
+    This function uses a pre-trained text classification model
+    (TF-IDF + Random Forest) to predict whether the sentiment
+    of a given message is positive or negative.
 
     Args:
-        message (str): The input message text to analyze.
+        message (str): The input text message to analyze.
 
     Returns:
-        int: 1 if the message is predicted as positive, 0 otherwise.
-             Returns 0 if the message is empty or only contains whitespace.
+        dict: A dictionary containing:
+            - label (str | None): "Positive" or "Negative", or None if
+              input is empty.
+            - proba (float | None): Reserved for future probability use.
     """
-    if not message or len(message.strip()) == 0:
-        return 0
-    prediction = model.predict([message])
-    return int(prediction[0])
+    if not message or not message.strip():
+        return {"label": None, "proba": None}
+
+    # Predict sentiment from raw text (TF-IDF + Random Forest)
+    label = _model.predict([message])[0]
+    return {"label": label, "proba": None}
+
+
+def analyze_satisfaction_binary(message: str) -> int:
+    """Analyze sentiment and return a binary label.
+
+    Args:
+        message (str): The text to analyze.
+
+    Returns:
+        int: 1 if sentiment is positive, 0 otherwise.
+    """
+    result = analyze_satisfaction(message)
+    return 1 if result["label"] == "Positive" else 0
 
 
 """
 Model Training Notes
 --------------------
 
-Dataset:
-    Source:
-        https://www.kaggle.com/datasets/jp797498e/twitter-entity-sentiment-analysis
-    Description:
-        A labeled dataset of Twitter posts containing entities and sentiment
-        labels.
+Dataset
+--------
+Source:
+    https://www.kaggle.com/datasets/jp797498e/twitter-entity-sentiment-analysis
 
-Training Steps:
-    1. Load dataset
-        >>> import pandas as pd
-        >>> df = pd.read_csv("twitter_training.csv", header=None)
-        >>> df.columns = ["ID", "Entity", "Sentiment", "Content"]
+Description:
+    A labeled dataset of Twitter posts containing entities and sentiment
+    labels.
 
-    2. Clean and preprocess
-        - Keep only 'Positive' and 'Negative' samples.
-        - Convert sentiment labels to binary:
-            Positive → 1, Negative → 0
-        >>> df["Sentiment"] = df["Sentiment"].apply(
-        lambda x: 1 if x == "Positive" else 0)
-        >>> df = df.dropna(subset=["Sentiment", "Content"])
+Training Steps
+--------------
+1. Load dataset
+    df = pd.read_csv("twitter_training.csv", header=None)
+    df.columns = ["ID", "Entity", "Sentiment", "Content"]
+    df.head()
 
-    3. Split dataset
-        >>> from sklearn.model_selection import train_test_split
-        >>> X_train, X_test, y_train, y_test = train_test_split(
-        ...     df["Content"], df["Sentiment"], test_size=0.2, random_state=42
-        ... )
+2. Clean and preprocess
+    print(df.isna().sum())
+    df.describe()
+    df = df.dropna(subset=["Sentiment", "Content"])
+    df = df[df["Sentiment"].isin(["Positive", "Negative"])]
+    print("\nShape after filtering:", df.shape)
+    print(df["Sentiment"].value_counts())
 
-    4. Build and train model
-        >>> from sklearn.feature_extraction.text import TfidfVectorizer
-        >>> from sklearn.linear_model import LogisticRegression
-        >>> from sklearn.pipeline import Pipeline
-        >>> model = Pipeline([
-        ...     ("tfidf", TfidfVectorizer(stop_words="english",
-                max_features=100000)),
-        ...     ("clf", LogisticRegression(max_iter=1000))
-        ... ])
-        >>> model.fit(X_train, y_train)
+3. Split dataset
+    y = df["Sentiment"]
+    X = df["Content"].astype(str)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
+    )  # Stratify to preserve class ratio
+    print("\nTraining set size:", X_train.shape)
+    print("Test set size:", X_test.shape)
 
-    5. Evaluate
-        >>> from sklearn.metrics import classification_report
-        >>> y_pred = model.predict(X_test)
-        >>> print(classification_report(y_test, y_pred))
+4. Build / Train / Evaluate models
 
-        Results (example):
-            precision    recall  f1-score   support
-            0       0.87      0.96      0.91     10681
-            1       0.84      0.62      0.72      4119
-            accuracy                           0.86     14800
-            macro avg       0.86      0.79      0.81     14800
-            weighted avg    0.86      0.86      0.86     14800
+    === Logistic Regression (accuracy ≈ 0.92) ===
+    clf1 = Pipeline(steps=[
+        ("tfidf", TfidfVectorizer(max_features=100000, stop_words="english",
+        ngram_range=(1, 2))),
+        ("logreg", LogisticRegression(max_iter=1000))
+    ])
+    clf1.fit(X_train, y_train)
+    y_pred1 = clf1.predict(X_test)
+    print("\n=== Logistic Regression ===")
+    print("Accuracy:", accuracy_score(y_test, y_pred1))
+    print(classification_report(y_test, y_pred1))
 
-    6. Save trained model
-        >>> import joblib
-        >>> joblib.dump(model, "sentiment_model.joblib")
+    === Decision Tree (accuracy ≈ 0.89) ===
+    clf2 = Pipeline(steps=[
+        ("tfidf", TfidfVectorizer(max_features=100000, stop_words="english",
+        ngram_range=(1, 2))),
+        ("tree", DecisionTreeClassifier(random_state=42))
+    ])
+    clf2.fit(X_train, y_train)
+    y_pred2 = clf2.predict(X_test)
+    print("\n=== Decision Tree ===")
+    print("Accuracy:", accuracy_score(y_test, y_pred2))
+    print(classification_report(y_test, y_pred2))
+
+    === Random Forest (accuracy ≈ 0.94, chosen model) ===
+    clf3 = Pipeline(steps=[
+        ("tfidf", TfidfVectorizer(max_features=100000, stop_words="english",
+        ngram_range=(1, 2))),
+        ("forest", RandomForestClassifier(n_estimators=200, random_state=42,
+        n_jobs=-1))
+    ])
+    clf3.fit(X_train, y_train)
+    y_pred3 = clf3.predict(X_test)
+    print("\n=== Random Forest ===")
+    print("Accuracy:", accuracy_score(y_test, y_pred3))
+    print(classification_report(y_test, y_pred3))
+
+5. Save the trained model
+    dump(clf3, "sentiment_model.joblib")
+    print("Model saved as 'sentiment_model.joblib'")
 """

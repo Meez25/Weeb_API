@@ -1,6 +1,6 @@
 from django.db import models
 
-from satisfaction.satisfaction import analyze_satisfaction
+from satisfaction.satisfaction import analyze_satisfaction_binary
 
 
 class Contact(models.Model):
@@ -35,7 +35,8 @@ class Contact(models.Model):
         Override the save method to automatically analyze satisfaction from the
         message content.
 
-        If a message is provided, calls `analyze_satisfaction` to compute
+        If a message is provided, calls `analyze_satisfaction_binary`
+        to compute
         a sentiment or satisfaction score and assigns it to the `satisfaction`
         field
         before saving the instance.
@@ -48,5 +49,5 @@ class Contact(models.Model):
         """
 
         if self.message:
-            self.satisfaction = analyze_satisfaction(self.message)
+            self.satisfaction = analyze_satisfaction_binary(self.message)
         super().save(*args, **kwargs)

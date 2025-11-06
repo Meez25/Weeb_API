@@ -22,7 +22,7 @@ class Post(models.Model):
     Represents a blog post entry.
 
     Attributes:
-        title (str): The title of the post. Must be unique.
+        title (str): The title of the post.
         slug (str): URL-friendly version of the title, automatically generated
         if blank.
         excerpt (str): Optional short summary or preview of the content.
@@ -38,7 +38,7 @@ class Post(models.Model):
         modified.
     """
 
-    title = models.CharField(max_length=200, unique=True)
+    title = models.CharField(max_length=200)
     slug = models.SlugField(max_length=220, unique=True, blank=True)
     excerpt = models.CharField(max_length=300, blank=True)
     content = models.TextField()
