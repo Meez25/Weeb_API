@@ -60,7 +60,7 @@ Description:
 Training Steps
 --------------
 1. Load dataset
-    df = pd.read_csv("twitter_training.csv")
+    df = pd.read_csv("twitter_training.csv", header=None)
     df.columns = ["ID", "Entity", "Sentiment", "Content"]
     df.head()
 
