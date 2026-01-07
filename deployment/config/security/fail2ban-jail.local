@@ -1,0 +1,66 @@
+# Configuration de sécurité Fail2Ban pour Weeb_API
+# Fichier à placer dans : /etc/fail2ban/jail.local
+
+[DEFAULT]
+# Durée du bannissement (en secondes) - 1 heure
+bantime = 3600
+
+# Durée de la fenêtre d'observation (10 minutes)
+findtime = 600
+
+# Nombre de tentatives avant bannissement
+maxretry = 5
+
+# Action par défaut (bannir l'IP)
+banaction = iptables-multiport
+
+# Email pour les notifications (optionnel)
+destemail = admin@yourdomain.com
+sender = noreply@yourdomain.com
+
+# Actions
+action = %(action_mwl)s
+
+[nginx-http-auth]
+enabled = true
+port = http,https
+logpath = /var/log/nginx/weebapi_error.log
+
+[nginx-noscript]
+enabled = true
+port = http,https
+logpath = /var/log/nginx/weebapi_access.log
+
+[nginx-badbots]
+enabled = true
+port = http,https
+logpath = /var/log/nginx/weebapi_access.log
+maxretry = 2
+
+[nginx-noproxy]
+enabled = true
+port = http,https
+logpath = /var/log/nginx/weebapi_access.log
+
+[nginx-limit-req]
+enabled = true
+port = http,https
+logpath = /var/log/nginx/weebapi_error.log
+
+# Protection contre les attaques sur l'API Django
+[django-auth]
+enabled = true
+port = http,https
+logpath = /var/log/gunicorn/weebapi_error.log
+maxretry = 5
+findtime = 300
+bantime = 3600
+
+# Protection SSH
+[sshd]
+enabled = true
+port = ssh
+logpath = /var/log/auth.log
+maxretry = 3
+findtime = 600
+bantime = 7200

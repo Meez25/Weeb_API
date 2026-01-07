@@ -1,0 +1,35 @@
+[Unit]
+Description=Gunicorn daemon for Weeb_API
+After=network.target
+
+[Service]
+Type=notify
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/Weeb_API/weebapi
+Environment="PATH=/var/www/Weeb_API/venv/bin"
+EnvironmentFile=/var/www/Weeb_API/.env
+
+# Commande pour démarrer Gunicorn
+ExecStart=/var/www/Weeb_API/venv/bin/gunicorn \
+          --workers 3 \
+          --worker-class=sync \
+          --max-requests 1000 \
+          --max-requests-jitter 50 \
+          --timeout 60 \
+          --bind unix:/var/www/Weeb_API/gunicorn.sock \
+          --access-logfile /var/log/gunicorn/weebapi_access.log \
+          --error-logfile /var/log/gunicorn/weebapi_error.log \
+          --log-level info \
+          core.wsgi:application
+
+# Restart policy
+Restart=on-failure
+RestartSec=5s
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
