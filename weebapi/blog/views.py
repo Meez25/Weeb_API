@@ -10,7 +10,7 @@ class PostListCreateView(generics.ListCreateAPIView):
 
     - **GET**: Returns a list of all published posts.
         Supports optional filtering, searching, and ordering.
-    - **POST**: Creates a new Post entry.
+    - **POST**: Creates a new Post entry. Requires authentication.
 
     ### Query Parameters
     - `q` (str, optional): Performs a text search in `title`, `excerpt`,
@@ -25,7 +25,8 @@ class PostListCreateView(generics.ListCreateAPIView):
       Example: `?ordering=created_at`
 
     ### Permissions
-    `AllowAny` — anyone (authenticated or not) can view and create posts.
+    - GET: `AllowAny` — anyone can view posts
+    - POST: `IsAuthenticated` — only authenticated users can create posts
 
     ### Example
         GET /api/posts/?q=django&author=John&ordering=created_at
@@ -33,7 +34,14 @@ class PostListCreateView(generics.ListCreateAPIView):
 
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-    permission_classes = [permissions.AllowAny]
+
+    def get_permissions(self):
+        """
+        Allow anyone to list posts (GET), but require authentication to create (POST).
+        """
+        if self.request.method == 'GET':
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
 
     def get_queryset(self):
         qs = super().get_queryset().filter(is_published=True)
@@ -62,20 +70,27 @@ class PostRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     """
     API view for retrieving, updating, or deleting a single Post.
 
-    - GET: Returns a single Post by its slug.
-    - PUT/PATCH: Updates the specified Post.
-    - DELETE: Removes the Post from the database.
+    - GET: Returns a single Post by its slug. Anyone can view.
+    - PUT/PATCH: Updates the specified Post. Requires authentication.
+    - DELETE: Removes the Post from the database. Requires authentication.
 
     Lookup:
         Uses the `slug` field for URL identification instead of the default
         `id`.
 
     Permissions:
-        AllowAny — anyone can view, edit, or delete posts.
-        (In a real-world setup, this should typically be restricted.)
+        - GET: `AllowAny` — anyone can view posts
+        - PUT/PATCH/DELETE: `IsAuthenticated` — only authenticated users can modify
     """
 
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     lookup_field = "slug"  # Identify using "slug" in the URL
-    permission_classes = [permissions.AllowAny]
+
+    def get_permissions(self):
+        """
+        Allow anyone to retrieve posts (GET), but require authentication to update or delete.
+        """
+        if self.request.method == 'GET':
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
