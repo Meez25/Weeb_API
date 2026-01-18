@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
-        fields = ["email", "password"]
+        fields = ["email", "password", "first_name", "last_name"]
         extra_kwargs = {'password': {'write_only': True}}
 
     def validate_password(self, value):
@@ -16,3 +16,6 @@ class UserSerializer(serializers.ModelSerializer):
         except DjangoValidationError as e:
             raise serializers.ValidationError(e.messages)
         return value
+
+    def create(self, validated_data):
+        return get_user_model().objects.create_user(**validated_data)

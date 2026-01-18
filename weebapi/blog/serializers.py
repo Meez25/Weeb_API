@@ -13,6 +13,7 @@ class PostSerializer(serializers.ModelSerializer):
     """
 
     url = serializers.SerializerMethodField()
+    author = serializers.SerializerMethodField()
 
     class Meta:
         """
@@ -30,7 +31,7 @@ class PostSerializer(serializers.ModelSerializer):
             "url", "id", "title", "slug", "excerpt", "content",
             "author", "is_published", "created_at", "updated_at"
         ]
-        read_only_fields = ["id", "slug", "created_at", "updated_at"]
+        read_only_fields = ["id", "slug", "author", "created_at", "updated_at"]
 
     def get_url(self, obj):
         """
@@ -47,3 +48,12 @@ class PostSerializer(serializers.ModelSerializer):
         """
         request = self.context.get('request')
         return request.build_absolute_uri(f"/api/posts/{obj.slug}/")
+
+    def get_author(self, obj):
+        """
+        Return the full name of the author or 'Anonyme' if no author.
+        """
+        if obj.author:
+            full_name = f"{obj.author.first_name} {obj.author.last_name}".strip()
+            return full_name if full_name else obj.author.email
+        return "Anonyme"
