@@ -10,7 +10,8 @@ class PostListCreateView(generics.ListCreateAPIView):
 
     - **GET**: Returns a list of all published posts.
         Supports optional filtering, searching, and ordering.
-    - **POST**: Creates a new Post entry.
+    - **POST**: Creates a new Post entry. Author is automatically set to the
+        authenticated user.
 
     ### Query Parameters
     - `q` (str, optional): Performs a text search in `title`, `excerpt`,
@@ -25,7 +26,9 @@ class PostListCreateView(generics.ListCreateAPIView):
       Example: `?ordering=created_at`
 
     ### Permissions
-    `AllowAny` — anyone (authenticated or not) can view and create posts.
+    `IsAuthenticatedOrReadOnly` — Requests for unauthenticated users will only
+    be permitted if the request method is one of the "safe" methods; GET, HEAD
+    or OPTIONS..
 
     ### Example
         GET /api/posts/?q=django&author=John&ordering=created_at
@@ -33,7 +36,7 @@ class PostListCreateView(generics.ListCreateAPIView):
 
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
         qs = super().get_queryset().filter(is_published=True)
@@ -44,18 +47,25 @@ class PostListCreateView(generics.ListCreateAPIView):
                 Q(title__icontains=q)
                 | Q(excerpt__icontains=q)
                 | Q(content__icontains=q)
-                | Q(author__icontains=q)
+                | Q(author__first_name__icontains=q)
+                | Q(author__last_name__icontains=q)
             )
 
         author = self.request.query_params.get("author")
         if author:
-            qs = qs.filter(author__icontains=author)
+            qs = qs.filter(
+                Q(author__first_name__icontains=author)
+                | Q(author__last_name__icontains=author)
+            )
 
         ordering = self.request.query_params.get("ordering", "-created_at")
         if ordering not in ("created_at", "-created_at"):
             ordering = "-created_at"
 
         return qs.order_by(ordering)
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
 
 
 class PostRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
@@ -71,11 +81,12 @@ class PostRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         `id`.
 
     Permissions:
-        AllowAny — anyone can view, edit, or delete posts.
-        (In a real-world setup, this should typically be restricted.)
+    `IsAuthenticatedOrReadOnly` — Requests for unauthenticated users will only
+    be permitted if the request method is one of the "safe" methods; GET, HEAD
+    or OPTIONS..
     """
 
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     lookup_field = "slug"  # Identify using "slug" in the URL
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
