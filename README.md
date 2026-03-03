@@ -2,37 +2,67 @@
 
 Django REST API for a blog with contact management and satisfaction analysis.
 
-## 🚀 Quick Start
+## Stack
 
-### Local Development
+- **Django 5.2** + **Django REST Framework**
+- **JWT authentication** via `djangorestframework-simplejwt`
+- **CORS** via `django-cors-headers`
+- **Sentiment analysis** via a pre-trained scikit-learn model
+- **PostgreSQL** (production) / **SQLite** (development)
+- **Gunicorn** + **WhiteNoise** (production)
 
-#### 1. Clone the repository
+## Project structure
 
-```bash
-cd /path/to/put/project/in
-git clone https://github.com/Meez25/Weeb_API.git
-cd Weeb_API
+```
+weeb_API/
+├── weebapi/
+│   ├── core/               # Django project (settings, urls, wsgi)
+│   │   └── settings/
+│   │       ├── base.py         # Common settings
+│   │       ├── development.py  # Local dev (SQLite, DEBUG=True)
+│   │       └── production.py   # Production (PostgreSQL, WhiteNoise, HTTPS)
+│   ├── blog/               # Blog posts app
+│   ├── contact/            # Contact form app
+│   └── satisfaction/       # Sentiment analysis app
+├── requirements.txt
+└── .env.example
 ```
 
-#### 2. Create virtual environment
+## Quick start
+
+### 1. Clone and set up the virtual environment
 
 ```bash
+git clone https://github.com/Meez25/Weeb_API.git
+cd Weeb_API
+
 python -m venv venv
 
 # Windows
 venv\Scripts\activate
-
 # Linux/Mac
 source venv/bin/activate
 ```
 
-#### 3. Install dependencies
+### 2. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-#### 4. Run development server
+### 3. Configure environment variables
+
+```bash
+cp .env.example .env
+```
+
+Generate a secret key and add it to `.env`:
+
+```bash
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+```
+
+### 4. Run the development server
 
 ```bash
 cd weebapi
@@ -40,109 +70,60 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-Visit `http://localhost:8000` in your browser.
+API available at `http://localhost:8000`.
 
-### Production Deployment with HTTPS
+---
 
-#### To deploy this API in production with HTTPS/SSL, check **[EPLOYMENT_GUIDE.md](deployment/DEPLOYMENT_GUIDE.md)** :
+## API endpoints
 
-## 📡 API Endpoints
+### Authentication (JWT)
 
-### 🔑 Authentication (JWT)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/token/` | Obtain access + refresh tokens |
+| POST | `/api/token/refresh/` | Refresh access token |
+| POST | `/api/token/verify/` | Verify a token |
 
-The API uses JWT (JSON Web Tokens) for authentication with access and refresh tokens.
-
-#### Obtain Token Pair
-
-**POST** `/api/token/`
-
-Request:
-
-```json
-{
-  "username": "your_username",
-  "password": "your_password"
-}
-```
-
-Response:
-
-```json
-{
-  "access": "eyJ0eXAiOiJKV1QiLCJhbGc...",
-  "refresh": "eyJ0eXAiOiJKV1QiLCJhbGc..."
-}
-```
-
-#### Refresh Access Token
-
-**POST** `/api/token/refresh/`
-
-Request:
-
-```json
-{
-  "refresh": "eyJ0eXAiOiJKV1QiLCJhbGc..."
-}
-```
-
-Response:
-
-```json
-{
-  "access": "eyJ0eXAiOiJKV1QiLCJhbGc..."
-}
-```
-
-#### Using the Access Token
-
-Include the access token in the `Authorization` header for protected endpoints:
+**Obtain tokens:**
 
 ```bash
-curl -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc..." \
-  https://api.example.com/api/posts/
+curl -X POST http://localhost:8000/api/token/ \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin", "password": "password"}'
 ```
 
-**Token Lifetimes:**
+**Use the access token:**
 
-- **Access Token**: 5 minutes (short-lived for security)
-- **Refresh Token**: 1 day (use to obtain new access tokens)
+```bash
+curl -H "Authorization: Bearer <access_token>" \
+  http://localhost:8000/api/posts/
+```
 
-📖 **For more details:** See [JWT_GUIDE.md](weebapi/scripts/JWT_GUIDE.md)
+**Token lifetimes:**
+- Access token: 60 min (development) / 15 min (production)
+- Refresh token: 7 days (development) / 1 day (production)
 
 ---
 
-### 📧 Contact Endpoint
+### Blog
 
-**POST** `/api/contact/`
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/posts/` | List posts (paginated, 6 per page) |
+| POST | `/api/posts/` | Create a post |
+| GET | `/api/posts/<slug>/` | Retrieve a post |
+| PATCH | `/api/posts/<slug>/` | Update a post |
+| DELETE | `/api/posts/<slug>/` | Delete a post |
 
-Request:
+**Query parameters for GET `/api/posts/`:**
 
-```json
-{
-  "first_name": "John",
-  "last_name": "Doe",
-  "phone_number": "1234567890",
-  "email_address": "john.doe@example.com",
-  "message": "Hello, I have a question..."
-}
-```
-
----
-
-### 📝 Blog Endpoints
-
-#### List/Create Posts
-
-**GET/POST** `/api/posts/`
-
-**Query parameters:**
-
-- `search` — Filter by title/content
-- `author` — Filter by author name
-- `category` — Filter by category
-- `ordering` — Sort by `created_at` or `title` (use `-created_at` for descending)
-- `page` — Pagination (6 posts per page)
+| Parameter | Description |
+|-----------|-------------|
+| `search` | Filter by title or content |
+| `author` | Filter by author name |
+| `category` | Filter by category |
+| `ordering` | Sort by `created_at` or `title` (prefix `-` for descending) |
+| `page` | Page number |
 
 **POST example:**
 
@@ -157,38 +138,87 @@ Request:
 }
 ```
 
-#### Retrieve/Update/Delete Post
-
-**GET/PATCH/DELETE** `/api/posts/<slug>/`
-
-Example: `/api/posts/apple-pie-recipe/`
+**GET/PATCH/DELETE a post:** `/api/posts/<slug>/`
 
 ---
 
-### 😊 Satisfaction Endpoint
+### Contact
 
-Analyze sentiment of a message using AI.
-
-**POST** `/api/satisfaction/`
-
-Request:
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/contact/` | Submit a contact message |
 
 ```json
 {
-  "message": "This is great!"
+  "first_name": "John",
+  "last_name": "Doe",
+  "phone_number": "0612345678",
+  "email_address": "john@example.com",
+  "message": "Hello, I have a question..."
 }
+```
+
+---
+
+### Satisfaction
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/satisfaction/` | Analyze sentiment of a message |
+
+```json
+{ "message": "This is great!" }
 ```
 
 Response:
 
 ```json
-{
-  "satisfaction": 1
-}
+{ "satisfaction": 1 }
 ```
 
-**Satisfaction values:**
+| Value | Meaning |
+|-------|---------|
+| `1` | Positive |
+| `0` | Neutral |
+| `-1` | Negative |
 
-- `1` = Positive
-- `0` = Neutral
-- `-1` = Negative
+---
+
+## Deployment
+
+### Settings
+
+The project uses a split settings structure. The default is `development`. In production, override via environment variable.
+
+| File | Used when |
+|------|-----------|
+| `core.settings.development` | Local development (default) |
+| `core.settings.production` | Production |
+
+### Required environment variables (production)
+
+| Variable | Description |
+|----------|-------------|
+| `DJANGO_SETTINGS_MODULE` | `core.settings.production` |
+| `SECRET_KEY` | Django secret key — generate a new one |
+| `DATABASE_URL` | PostgreSQL URL: `postgres://user:pass@host:5432/db` |
+| `ALLOWED_HOSTS` | Comma-separated list of allowed domains |
+| `CORS_ALLOWED_ORIGINS` | Comma-separated list of allowed frontend origins |
+
+Copy `.env.example` to `.env` and fill in the values. Never commit `.env` to version control.
+
+### Start command (Gunicorn)
+
+```bash
+gunicorn core.wsgi:application --chdir weebapi
+```
+
+### First deploy checklist
+
+```bash
+# Collect static files
+python manage.py collectstatic --noinput
+
+# Apply migrations
+python manage.py migrate
+```
