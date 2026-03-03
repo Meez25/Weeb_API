@@ -28,8 +28,14 @@ def health_check(request):
     return JsonResponse({"status": "ok", "message": "API is healthy"})
 
 
+def trigger_error(request):
+    division_by_zero = 1 / 0
+    return JsonResponse({"this": "will never be returned"})
+
+
 urlpatterns = [
     path('health/', health_check, name='health_check'),
+    path('error/', trigger_error, name='trigger_error'),
     path('admin/', admin.site.urls),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
