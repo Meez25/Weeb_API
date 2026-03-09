@@ -1,4 +1,5 @@
 from rest_framework import generics, permissions
+from .permissions import IsOwnerOrReadOnly
 from django.db.models import Q
 from .models import Post
 from .serializers import PostSerializer
@@ -36,7 +37,7 @@ class PostListCreateView(generics.ListCreateAPIView):
 
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
 
     def get_queryset(self):
         qs = super().get_queryset().filter(is_published=True)
@@ -89,4 +90,4 @@ class PostRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     lookup_field = "slug"  # Identify using "slug" in the URL
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
