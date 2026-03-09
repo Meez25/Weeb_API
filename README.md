@@ -23,6 +23,7 @@ weeb_API/
 │   │       └── production.py   # Production (PostgreSQL, WhiteNoise, HTTPS)
 │   ├── blog/               # Blog posts app
 │   ├── contact/            # Contact form app
+│   ├── users/              # Custom user model + auth endpoints
 │   └── satisfaction/       # Sentiment analysis app
 ├── requirements.txt
 └── .env.example
@@ -76,6 +77,36 @@ API available at `http://localhost:8000`.
 
 ## API endpoints
 
+### Health check
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/health/` | Returns `{"status": "ok"}` — used by PaaS health checks |
+
+---
+
+### Users
+
+| Method | Endpoint | Description | Auth required |
+|--------|----------|-------------|---------------|
+| POST | `/api/users/create/` | Register a new user | No |
+| GET | `/api/users/me/` | Get current user info | Yes |
+
+**Register:**
+
+```json
+{
+  "email": "user@example.com",
+  "password": "StrongPass123!",
+  "first_name": "Alice",
+  "last_name": "Doe"
+}
+```
+
+> Password must be at least 8 characters and pass Django's validators.
+
+---
+
 ### Authentication (JWT)
 
 | Method | Endpoint | Description |
@@ -89,7 +120,7 @@ API available at `http://localhost:8000`.
 ```bash
 curl -X POST http://localhost:8000/api/token/ \
   -H "Content-Type: application/json" \
-  -d '{"username": "admin", "password": "password"}'
+  -d '{"email": "admin@example.com", "password": "password"}'
 ```
 
 **Use the access token:**
@@ -107,13 +138,13 @@ curl -H "Authorization: Bearer <access_token>" \
 
 ### Blog
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/posts/` | List posts (paginated, 6 per page) |
-| POST | `/api/posts/` | Create a post |
-| GET | `/api/posts/<slug>/` | Retrieve a post |
-| PATCH | `/api/posts/<slug>/` | Update a post |
-| DELETE | `/api/posts/<slug>/` | Delete a post |
+| Method | Endpoint | Description | Auth required |
+|--------|----------|-------------|---------------|
+| GET | `/api/posts/` | List posts (paginated, 6 per page) | No |
+| POST | `/api/posts/` | Create a post | Yes |
+| GET | `/api/posts/<slug>/` | Retrieve a post | No |
+| PATCH | `/api/posts/<slug>/` | Update a post | Yes |
+| DELETE | `/api/posts/<slug>/` | Delete a post | Yes |
 
 **Query parameters for GET `/api/posts/`:**
 
@@ -125,18 +156,19 @@ curl -H "Authorization: Bearer <access_token>" \
 | `ordering` | Sort by `created_at` or `title` (prefix `-` for descending) |
 | `page` | Page number |
 
-**POST example:**
+**POST example** (author is automatically set to the authenticated user):
 
 ```json
 {
   "title": "Apple Pie Recipe",
   "excerpt": "Best pie in the world",
   "content": "Ingredients: puff pastry, apples, apple sauce...",
-  "author": "Chef John",
-  "category": "Recipes",
+  "category": "technologie",
   "is_published": true
 }
 ```
+
+Available categories: `technologie`, `developpement`, `accessibilite`, `performance`, `architecture`, `education`, `securite`, `alpha_beta`, `gadget`, `design`, `autre`.
 
 **GET/PATCH/DELETE a post:** `/api/posts/<slug>/`
 
@@ -204,6 +236,7 @@ The project uses a split settings structure. The default is `development`. In pr
 | `DATABASE_URL` | PostgreSQL URL: `postgres://user:pass@host:5432/db` |
 | `ALLOWED_HOSTS` | Comma-separated list of allowed domains |
 | `CORS_ALLOWED_ORIGINS` | Comma-separated list of allowed frontend origins |
+| `SENTRY_DSN` | Sentry DSN for error tracking (optional) |
 
 Copy `.env.example` to `.env` and fill in the values. Never commit `.env` to version control.
 
@@ -221,4 +254,24 @@ python manage.py collectstatic --noinput
 
 # Apply migrations
 python manage.py migrate
+```
+
+---
+
+## Development
+
+### Run tests
+
+```bash
+python manage.py test blog users contact
+```
+
+### Lint (ruff)
+
+```bash
+# Check
+ruff check weebapi/
+
+# Auto-fix
+ruff check weebapi/ --fix
 ```
