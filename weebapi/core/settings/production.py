@@ -3,7 +3,9 @@ Django production settings.
 """
 
 import os
+
 import dj_database_url
+
 from .base import *
 
 # ==============================================================================
@@ -127,8 +129,8 @@ LOGGING = {
 # SENTRY
 # ==============================================================================
 
-import sentry_sdk
-from sentry_sdk.integrations.django import DjangoIntegration
+import sentry_sdk  # noqa: E402
+from sentry_sdk.integrations.django import DjangoIntegration  # noqa: E402
 
 SENTRY_DSN = os.environ.get('SENTRY_DSN')
 

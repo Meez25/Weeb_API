@@ -3,8 +3,8 @@ Utility to load environment variables from .env file
 Use this file in manage.py and wsgi.py for production
 """
 
-import os
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 # Determine the project base directory (go up two levels to reach project root)

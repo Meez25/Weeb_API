@@ -1,5 +1,6 @@
-from rest_framework import generics, permissions
 from django.db.models import Q
+from rest_framework import generics, permissions
+
 from .models import Post
 from .serializers import PostSerializer
 
@@ -10,7 +11,6 @@ class PostListCreateView(generics.ListCreateAPIView):
 
     - **GET**: Returns a list of all published posts.
         Supports optional filtering, searching, and ordering.
-<<<<<<< HEAD
     - **POST**: Creates a new Post entry. Author is automatically set to the
         authenticated user.
 

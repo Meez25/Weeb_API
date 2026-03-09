@@ -1,5 +1,4 @@
 from django.db import models
-
 from satisfaction.satisfaction import analyze_satisfaction_binary
 
 

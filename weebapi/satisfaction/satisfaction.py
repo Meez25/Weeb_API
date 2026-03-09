@@ -1,6 +1,6 @@
 import os
-import joblib
 
+import joblib
 
 # Path to the pre-trained sentiment analysis model
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "sentiment_model.joblib")
