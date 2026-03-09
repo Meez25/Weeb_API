@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.utils.text import slugify
 
@@ -27,7 +28,7 @@ class Post(models.Model):
         if blank.
         excerpt (str): Optional short summary or preview of the content.
         content (str): The main body text of the post.
-        author (str): The author’s name. Defaults to "Anonyme".
+        author (User): The user who created the post.
         category (str): The category of the post, chosen from predefined choices.
         date (datetime): Optional publication date and time of the post.
         readTime (int): Estimated reading time in minutes. Defaults to 0.
@@ -42,7 +43,13 @@ class Post(models.Model):
     slug = models.SlugField(max_length=220, unique=True, blank=True)
     excerpt = models.CharField(max_length=300, blank=True)
     content = models.TextField()
-    author = models.CharField(max_length=120, default="Anonyme")
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="posts",
+        null=True,
+        blank=True
+    )
     category = models.CharField(max_length=100, choices=CATEGORY_CHOICES)
     date = models.DateTimeField(blank=True, null=True)
     readTime = models.PositiveIntegerField(default=0)
