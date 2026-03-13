@@ -2,6 +2,7 @@ from django.db.models import Q
 from rest_framework import generics, permissions
 
 from .models import Post
+from .permissions import IsOwnerOrReadOnly
 from .serializers import PostSerializer
 
 
@@ -43,7 +44,7 @@ class PostListCreateView(generics.ListCreateAPIView):
         """
         if self.request.method == 'GET':
             return [permissions.AllowAny()]
-        return [permissions.IsAuthenticated()]
+        return [permissions.IsAuthenticated(), IsOwnerOrReadOnly()]
 
     def get_queryset(self):
         qs = super().get_queryset().filter(is_published=True)
@@ -102,4 +103,4 @@ class PostRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         """
         if self.request.method == 'GET':
             return [permissions.AllowAny()]
-        return [permissions.IsAuthenticated()]
+        return [permissions.IsAuthenticated(), IsOwnerOrReadOnly()]
