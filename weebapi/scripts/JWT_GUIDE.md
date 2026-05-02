@@ -2,6 +2,9 @@
 
 ## 🔑 Authentication Endpoints
 
+The project's `USERNAME_FIELD` is `email`, so authentication payloads use
+`email` (not `username`).
+
 ### 1. Obtain a token (Login)
 
 ```bash
@@ -9,8 +12,8 @@ POST http://127.0.0.1:8000/api/token/
 Content-Type: application/json
 
 {
-    "username": "votre_username",
-    "password": "votre_password"
+    "email": "your_email@example.com",
+    "password": "your_password"
 }
 ```
 
@@ -30,7 +33,7 @@ POST http://127.0.0.1:8000/api/token/refresh/
 Content-Type: application/json
 
 {
-    "refresh": "votre_refresh_token"
+    "refresh": "your_refresh_token"
 }
 ```
 
@@ -50,7 +53,7 @@ POST http://127.0.0.1:8000/api/token/verify/
 Content-Type: application/json
 
 {
-    "token": "votre_access_token"
+    "token": "your_access_token"
 }
 ```
 
@@ -64,6 +67,9 @@ GET http://127.0.0.1:8000/api/posts/
 
 ### Create an article (Authentication required)
 
+`author` is set automatically from the authenticated user — do not send it in
+the request body.
+
 ```bash
 POST http://127.0.0.1:8000/api/posts/
 Authorization: Bearer <your_access_token>
@@ -72,12 +78,12 @@ Content-Type: application/json
 {
     "title": "My article",
     "content": "Article content",
-    "author": "Author name",
+    "category": "technologie",
     "excerpt": "Optional summary"
 }
 ```
 
-### Update an article (Authentication required)
+### Update an article (Authentication required, owner only)
 
 ```bash
 PUT http://127.0.0.1:8000/api/posts/<slug>/
@@ -90,7 +96,7 @@ Content-Type: application/json
 }
 ```
 
-### Delete an article (Authentication required)
+### Delete an article (Authentication required, owner only)
 
 ```bash
 DELETE http://127.0.0.1:8000/api/posts/<slug>/
@@ -101,30 +107,33 @@ Authorization: Bearer <your_access_token>
 
 ### Token Lifetime
 
-- **Access Token:** 60 minutes
-- **Refresh Token:** 7 days
+| Environment | Access Token | Refresh Token |
+| ----------- | ------------ | ------------- |
+| Development | 60 minutes   | 7 days        |
+| Production  | 15 minutes   | 1 day         |
 
 ### Enabled Features
 
 - ✅ Automatic refresh token rotation
 - ✅ Token blacklist after rotation
-- ✅ HS256 Algorithm (HMAC with SHA-256)
+- ✅ HS256 algorithm (HMAC with SHA-256)
+- ✅ Throttling on `/api/token/` and `/api/users/create/` (production)
 
 ## 🔐 Permissions
 
-| Endpoint             | Méthode   | Permission                      |
-| -------------------- | --------- | ------------------------------- |
-| `/api/posts/`        | GET       | Public (AllowAny)               |
-| `/api/posts/`        | POST      | Authenticated (IsAuthenticated) |
-| `/api/posts/<slug>/` | GET       | Public (AllowAny)               |
-| `/api/posts/<slug>/` | PUT/PATCH | Authenticated (IsAuthenticated) |
-| `/api/posts/<slug>/` | DELETE    | Authenticated (IsAuthenticated) |
+| Endpoint             | Method    | Permission                       |
+| -------------------- | --------- | -------------------------------- |
+| `/api/posts/`        | GET       | Public (AllowAny)                |
+| `/api/posts/`        | POST      | Authenticated (IsAuthenticated)  |
+| `/api/posts/<slug>/` | GET       | Public (AllowAny)                |
+| `/api/posts/<slug>/` | PUT/PATCH | Authenticated + owner only       |
+| `/api/posts/<slug>/` | DELETE    | Authenticated + owner only       |
 
 ## 🧪 Example with PowerShell
 
 ```powershell
 # 1. Obtain a token
-$body = @{username='testuser';password='testpass123'} | ConvertTo-Json
+$body = @{email='test@example.com';password='testpass123'} | ConvertTo-Json
 $tokenResponse = Invoke-WebRequest -Uri 'http://127.0.0.1:8000/api/token/' -Method POST -Body $body -ContentType 'application/json'
 $tokens = $tokenResponse.Content | ConvertFrom-Json
 
@@ -133,7 +142,7 @@ $headers = @{Authorization="Bearer $($tokens.access)"}
 $articleBody = @{
     title='My article'
     content='My article content'
-    author='John Doe'
+    category='technologie'
 } | ConvertTo-Json
 
 $response = Invoke-WebRequest -Uri 'http://127.0.0.1:8000/api/posts/' -Method POST -Headers $headers -Body $articleBody -ContentType 'application/json'
@@ -145,22 +154,22 @@ $response = Invoke-WebRequest -Uri 'http://127.0.0.1:8000/api/posts/' -Method PO
 # 1. Obtain a token
 curl -X POST http://127.0.0.1:8000/api/token/ \
   -H "Content-Type: application/json" \
-  -d '{"username":"testuser","password":"testpass123"}'
+  -d '{"email":"test@example.com","password":"testpass123"}'
 
 # 2. Create an article (replace YOUR_TOKEN)
 curl -X POST http://127.0.0.1:8000/api/posts/ \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"title":"My article","content":"Content","author":"John Doe"}'
+  -d '{"title":"My article","content":"Content","category":"technologie"}'
 ```
 
 ## 👤 Test User
 
-A test user has been created:
+`scripts/create_test_user.py` creates a default superuser when run in DEBUG
+mode (it refuses to run otherwise):
 
-- **Username:** testuser
-- **Password:** testpass123
 - **Email:** test@example.com
+- **Password:** testpass123
 
 ## 📚 Additional Documentation
 
