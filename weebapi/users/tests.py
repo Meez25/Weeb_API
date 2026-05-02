@@ -49,8 +49,6 @@ class UserMeTests(APITestCase):
             first_name="Bob",
             last_name="Smith",
         )
-        self.user.is_active = True
-        self.user.save()
         refresh = RefreshToken.for_user(self.user)
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")  # type: ignore[attr-defined]
 
@@ -70,8 +68,6 @@ class JWTTokenTests(APITestCase):
         self.user = User.objects.create_user(  # type: ignore[call-arg]
             email="jwt@example.com", password="StrongPass123!"
         )
-        self.user.is_active = True
-        self.user.save()
 
     def test_obtain_token(self):
         response = self.client.post(
@@ -107,10 +103,11 @@ class JWTTokenTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_inactive_user_cannot_obtain_token(self):
-        User.objects.create_user(  # type: ignore[call-arg]
+        inactive = User.objects.create_user(  # type: ignore[call-arg]
             email="inactive@example.com", password="StrongPass123!"
         )
-        # is_active=False by default
+        inactive.is_active = False
+        inactive.save()
         response = self.client.post(
             "/api/token/",
             {"email": "inactive@example.com", "password": "StrongPass123!"},
