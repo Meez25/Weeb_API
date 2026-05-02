@@ -42,3 +42,8 @@ class ContactCreateTests(APITestCase):
         contact = Contact.objects.get(email_address="john@example.com")
         # satisfaction is set by analyze_satisfaction_binary — just check it's not None
         self.assertIsNotNone(contact.satisfaction)
+
+    def test_satisfaction_endpoint_not_exposed(self):
+        """Sentiment analysis is internal — no public HTTP endpoint."""
+        response = self.client.post("/api/satisfaction/", {"message": "test"})
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

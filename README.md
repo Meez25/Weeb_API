@@ -192,27 +192,16 @@ Available categories: `technologie`, `developpement`, `accessibilite`, `performa
 
 ---
 
-### Satisfaction
+### Satisfaction (internal)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/satisfaction/` | Analyze sentiment of a message |
-
-```json
-{ "message": "This is great!" }
-```
-
-Response:
-
-```json
-{ "satisfaction": 1 }
-```
+The `satisfaction` app is **not exposed** as an HTTP endpoint. It exposes a Python helper, `analyze_satisfaction_binary(message)`, used internally by `Contact.save()` to compute and store a sentiment score on every incoming contact message.
 
 | Value | Meaning |
 |-------|---------|
 | `1` | Positive |
-| `0` | Neutral |
-| `-1` | Negative |
+| `0` | Negative or empty |
+
+The classifier (`sentiment_model.joblib`) is a TF-IDF + Random Forest model trained on a binary positive/negative dataset.
 
 ---
 
