@@ -52,8 +52,11 @@ class PostSerializer(serializers.ModelSerializer):
     def get_author(self, obj):
         """
         Return the full name of the author or 'Anonyme' if no author.
+
+        Never falls back to email — that would leak PII on the public list
+        endpoint and let anonymous users enumerate registered accounts.
         """
         if obj.author:
             full_name = f"{obj.author.first_name} {obj.author.last_name}".strip()
-            return full_name if full_name else obj.author.email
+            return full_name or "Anonyme"
         return "Anonyme"

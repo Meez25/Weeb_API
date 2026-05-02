@@ -41,10 +41,14 @@ class PostListCreateView(generics.ListCreateAPIView):
     def get_permissions(self):
         """
         Allow anyone to list posts (GET), but require authentication to create (POST).
+
+        IsOwnerOrReadOnly is intentionally NOT applied to POST: there is no
+        existing object yet, so object-level checks are a no-op. Object-level
+        ownership is enforced on the retrieve/update/destroy view instead.
         """
         if self.request.method == 'GET':
             return [permissions.AllowAny()]
-        return [permissions.IsAuthenticated(), IsOwnerOrReadOnly()]
+        return [permissions.IsAuthenticated()]
 
     def get_queryset(self):
         qs = super().get_queryset().filter(is_published=True)

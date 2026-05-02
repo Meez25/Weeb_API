@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.db import models
+from django.db import IntegrityError, models, transaction
 from django.utils.text import slugify
 
 CATEGORY_CHOICES = [
@@ -44,7 +44,7 @@ class Post(models.Model):
     content = models.TextField()
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         related_name="posts",
         null=True,
         blank=True
@@ -66,23 +66,36 @@ class Post(models.Model):
         slug.
 
         If the slug field is empty, it creates one from the title using
-        Django’s `slugify`.
+        Django's `slugify`.
         If a slug already exists, appends a numeric suffix (-2, -3, etc.) to
         ensure uniqueness.
+
+        Two concurrent saves can both pass the existence check and produce the
+        same candidate slug. The DB-level unique constraint catches that; this
+        method retries on IntegrityError to avoid surfacing a 500 to the caller.
 
         Args:
             *args: Variable length argument list passed to the parent class.
             **kwargs: Arbitrary keyword arguments passed to the parent class.
         """
-        if not self.slug:
-            base = slugify(self.title)
-            candidate = base
-            i = 1
-            while Post.objects.filter(slug=candidate).exists():
-                i += 1
-                candidate = f"{base}-{i}"
+        if self.slug:
+            super().save(*args, **kwargs)
+            return
+
+        base = slugify(self.title) or "post"
+        for attempt in range(10):
+            candidate = base if attempt == 0 else f"{base}-{attempt + 1}"
+            if Post.objects.filter(slug=candidate).exists():
+                continue
             self.slug = candidate
-        super().save(*args, **kwargs)
+            try:
+                with transaction.atomic():
+                    super().save(*args, **kwargs)
+                return
+            except IntegrityError:
+                self.slug = ""
+                continue
+        raise IntegrityError(f"Could not generate a unique slug for title={self.title!r}")
 
     def __str__(self):
         """
