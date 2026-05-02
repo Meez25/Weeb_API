@@ -217,6 +217,12 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 
+# Claude Code (machine-specific permissions allowlist and local agent state)
+.claude/
+
+# One-off local utilities (not part of the API)
+convert.py
+
 # Marimo
 marimo/_static/
 marimo/_lsp/
