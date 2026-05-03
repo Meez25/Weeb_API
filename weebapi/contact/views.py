@@ -1,11 +1,25 @@
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, throttle_classes
 from rest_framework.response import Response
+from rest_framework.throttling import SimpleRateThrottle
 
 from .serializers import ContactSerializer
 
 
+class ContactThrottle(SimpleRateThrottle):
+    """Rate-limit contact form submissions per IP, regardless of auth state."""
+
+    scope = "contact"
+
+    def get_cache_key(self, request, view):
+        return self.cache_format % {
+            "scope": self.scope,
+            "ident": self.get_ident(request),
+        }
+
+
 @api_view(['POST'])
+@throttle_classes([ContactThrottle])
 def contact_create(request):
     """
     Handle contact form submissions via POST requests.

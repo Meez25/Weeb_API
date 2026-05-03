@@ -1,7 +1,9 @@
+from django.core.cache import cache
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 from .models import Contact
+from .views import ContactThrottle
 
 
 class ContactCreateTests(APITestCase):
@@ -47,3 +49,36 @@ class ContactCreateTests(APITestCase):
         """Sentiment analysis is internal — no public HTTP endpoint."""
         response = self.client.post("/api/satisfaction/", {"message": "test"})
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class ContactThrottleTests(APITestCase):
+    url = "/api/contact/"
+
+    valid_data = {
+        "first_name": "Jane",
+        "last_name": "Doe",
+        "phone_number": "+33123456789",
+        "email_address": "jane@example.com",
+        "message": "Hello.",
+    }
+
+    def setUp(self):
+        cache.clear()
+        # Monkey-patch the rate so we don't need to fire 10000 requests.
+        # SimpleRateThrottle reads `self.rate` in __init__ before falling back
+        # to settings, so a class attribute wins per-instance.
+        ContactThrottle.rate = "2/hour"
+        self.addCleanup(self._restore)
+
+    def _restore(self):
+        if "rate" in ContactThrottle.__dict__:
+            del ContactThrottle.rate
+        cache.clear()
+
+    def test_throttle_returns_429_after_limit(self):
+        for _ in range(2):
+            response = self.client.post(self.url, self.valid_data)
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        response = self.client.post(self.url, self.valid_data)
+        self.assertEqual(response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)

@@ -39,14 +39,15 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
-    # Permissive rates for dev/tests; production.py tightens these. The "login"
-    # and "register" scopes are referenced by views directly, so they must be
-    # defined here too (not only in production).
+    # Permissive rates for dev/tests; production.py tightens these. The "login",
+    # "register" and "contact" scopes are referenced by views directly, so they
+    # must be defined here too (not only in production).
     "DEFAULT_THROTTLE_RATES": {
         "anon": "10000/hour",
         "user": "10000/hour",
         "login": "10000/min",
         "register": "10000/hour",
+        "contact": "10000/hour",
     },
 }
 

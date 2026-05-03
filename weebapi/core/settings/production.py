@@ -99,6 +99,7 @@ REST_FRAMEWORK = {
         'user': '1000/hour',
         'login': '5/min',
         'register': '3/hour',
+        'contact': '20/hour',
     },
 }
 
