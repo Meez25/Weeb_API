@@ -7,7 +7,12 @@ class CustomUserManager(UserManager):
         if not email:
             raise ValueError("L'email est obligatoire")
         email = self.normalize_email(email)
-        extra_fields.setdefault("username", email)
+        # `username` is intentionally left as NULL at signup. The frontend
+        # asks the user for a display name when they publish their first
+        # article (cf. CreateArticleForm); NULL — not empty string — is the
+        # "not set yet" signal because the field is unique=True and multiple
+        # empty strings would collide.
+        extra_fields.setdefault("username", None)
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
@@ -22,7 +27,7 @@ class CustomUserManager(UserManager):
 
 class User(AbstractUser):
     email = models.EmailField(unique=True)
-    username = models.CharField(max_length=150, blank=True)
+    username = models.CharField(max_length=30, blank=True, null=True, unique=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []

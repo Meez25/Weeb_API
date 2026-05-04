@@ -59,16 +59,12 @@ class PostListCreateView(generics.ListCreateAPIView):
                 Q(title__icontains=q)
                 | Q(excerpt__icontains=q)
                 | Q(content__icontains=q)
-                | Q(author__first_name__icontains=q)
-                | Q(author__last_name__icontains=q)
+                | Q(author__username__icontains=q)
             )
 
         author = self.request.query_params.get("author")
         if author:
-            qs = qs.filter(
-                Q(author__first_name__icontains=author)
-                | Q(author__last_name__icontains=author)
-            )
+            qs = qs.filter(author__username__icontains=author)
 
         ordering = self.request.query_params.get("ordering", "-created_at")
         if ordering not in ("created_at", "-created_at"):

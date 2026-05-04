@@ -14,6 +14,7 @@ class PostSerializer(serializers.ModelSerializer):
 
     url = serializers.SerializerMethodField()
     author = serializers.SerializerMethodField()
+    is_owner = serializers.SerializerMethodField()
 
     class Meta:
         """
@@ -29,10 +30,12 @@ class PostSerializer(serializers.ModelSerializer):
         model = Post
         fields = [
             "url", "id", "title", "slug", "excerpt", "content",
-            "category", "readTime", "author", "is_published",
+            "category", "readTime", "author", "is_owner", "is_published",
             "created_at", "updated_at"
         ]
-        read_only_fields = ["id", "slug", "author", "created_at", "updated_at"]
+        read_only_fields = [
+            "id", "slug", "author", "is_owner", "created_at", "updated_at"
+        ]
 
     def get_url(self, obj):
         """
@@ -52,12 +55,24 @@ class PostSerializer(serializers.ModelSerializer):
 
     def get_author(self, obj):
         """
-        Return the full name of the author or 'Anonyme' if no author.
+        Return the username of the author or 'Anonyme' if no author.
 
         Never falls back to email — that would leak PII on the public list
         endpoint and let anonymous users enumerate registered accounts.
         """
         if obj.author:
-            full_name = f"{obj.author.first_name} {obj.author.last_name}".strip()
-            return full_name or "Anonyme"
+            return (obj.author.username or "").strip() or "Anonyme"
         return "Anonyme"
+
+    def get_is_owner(self, obj):
+        """
+        True when the requesting user is the post's author.
+
+        Lets the frontend conditionally render owner-only actions (delete
+        button, "Moi" label) without leaking author IDs across the public
+        list endpoint.
+        """
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated or not obj.author:
+            return False
+        return obj.author_id == request.user.id

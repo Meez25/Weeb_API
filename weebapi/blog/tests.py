@@ -6,9 +6,11 @@ from users.models import User
 from .models import Post
 
 
-def make_user(email="author@example.com", active=True, first_name="Alice", last_name="Author"):
+def make_user(email="author@example.com", active=True, username=None):
+    """Default username=None so multiple users created in a single test
+    don't collide on the (now unique) `username` field."""
     user = User.objects.create_user(  # type: ignore[call-arg]
-        email=email, password="StrongPass123!", first_name=first_name, last_name=last_name
+        email=email, password="StrongPass123!", username=username
     )
     user.is_active = active
     user.save()
@@ -22,7 +24,7 @@ def auth_client(client, user):
 
 class PostListTests(APITestCase):
     def setUp(self):
-        self.user = make_user()
+        self.user = make_user(username="Alice")
         Post.objects.create(
             title="Published Post",
             content="Content",
@@ -211,16 +213,15 @@ class PostDetailTests(APITestCase):
         response = self.client.get("/api/posts/does-not-exist/")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_author_field_shows_full_name(self):
-        self.user.first_name = "Alice"
-        self.user.last_name = "Martin"
+    def test_author_field_shows_username(self):
+        self.user.username = "AliceM"
         self.user.save()
         response = self.client.get(f"/api/posts/{self.post.slug}/")
-        self.assertEqual(response.data["author"], "Alice Martin")  # type: ignore[attr-defined]
+        self.assertEqual(response.data["author"], "AliceM")  # type: ignore[attr-defined]
 
-    def test_author_field_anonyme_when_no_name(self):
-        """When the author has no first/last name, never leak the email."""
-        noname_user = make_user(email="noname@example.com", first_name="", last_name="")
+    def test_author_field_anonyme_when_no_username(self):
+        """When the author has no username (NULL), never leak the email."""
+        noname_user = make_user(email="noname@example.com", username=None)
         post = Post.objects.create(
             title="No Name Post", content="C", category="design",
             author=noname_user, is_published=True,
@@ -235,3 +236,25 @@ class PostDetailTests(APITestCase):
         )
         response = self.client.get(f"/api/posts/{post.slug}/")
         self.assertEqual(response.data["author"], "Anonyme")  # type: ignore[attr-defined]
+
+    def test_is_owner_true_for_author(self):
+        auth_client(self.client, self.user)
+        response = self.client.get(f"/api/posts/{self.post.slug}/")
+        self.assertTrue(response.data["is_owner"])  # type: ignore[attr-defined]
+
+    def test_is_owner_false_for_other_user(self):
+        other = make_user(email="other@example.com")
+        auth_client(self.client, other)
+        response = self.client.get(f"/api/posts/{self.post.slug}/")
+        self.assertFalse(response.data["is_owner"])  # type: ignore[attr-defined]
+
+    def test_is_owner_false_for_anonymous(self):
+        response = self.client.get(f"/api/posts/{self.post.slug}/")
+        self.assertFalse(response.data["is_owner"])  # type: ignore[attr-defined]
+
+    def test_delete_post_non_owner_forbidden(self):
+        other = make_user(email="other@example.com")
+        auth_client(self.client, other)
+        response = self.client.delete(f"/api/posts/{self.post.slug}/")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertTrue(Post.objects.filter(pk=self.post.pk).exists())
